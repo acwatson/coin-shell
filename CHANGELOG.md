@@ -1,5 +1,10 @@
 # COIN Shell Release Notes
 
+# February 2026
+
+* For CDK projects, check for the use of Yarn workspaces and compile all workspace packages before running CDK commands. This allows CDK code to depend on externalized local packages, such as a "constructs" module.
+  * This feature can be disabled by setting a `COIN_SKIP_WORKSPACE_BUILD` environment variable to "y".
+
 # November 2025
 
 * Added `make help` and `make coin-help` commands that will print out documentation for each command, grouped by category
