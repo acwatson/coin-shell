@@ -2165,19 +2165,19 @@ exec_package_manager_build_if_needed () {
     fi
 
     # Check if the project is using workspaces by looking for "workspaces" in the package.json 
-    # file in the projectCdkRootDir. If not, do nothing.
-    if [[ -z "$projectCdkRootDir" ]] || [[ ! -f "$projectCdkRootDir/package.json" ]]; then
-        log "Skipping package manager build since package.json file was not found at the project CDK root directory: $projectCdkRootDir/package.json"
+    # file in the projectIacDir. If not, do nothing.
+    if [[ -z "$projectIacDir" ]] || [[ ! -f "$projectIacDir/package.json" ]]; then
+        log "Skipping package manager build since package.json file was not found at the project CDK root directory: $projectIacDir/package.json"
         return 0
     fi
 
-    if ! grep -q '"workspaces"' "$projectCdkRootDir/package.json"; then
-        log "Skipping package manager build since no workspaces were detected in $projectCdkRootDir/package.json"
+    if ! grep -q '"workspaces"' "$projectIacDir/package.json"; then
+        log "Skipping package manager build since no workspaces were detected in $projectIacDir/package.json"
         return 0
     fi
 
-    display "\nDetected Yarn workspaces; executing \"yarn build\" in $projectCdkRootDir"
-    pushd "$projectCdkRootDir" > /dev/null || return 1
+    display "\nDetected Yarn workspaces; executing \"yarn build\" in $projectIacDir"
+    pushd "$projectIacDir" > /dev/null || return 1
     yarn build
     local buildExit=$?
     popd > /dev/null || true
