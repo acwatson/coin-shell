@@ -2176,10 +2176,40 @@ exec_package_manager_build_if_needed () {
         return 0
     fi
 
-    display "\nDetected Yarn workspaces; executing \"yarn build\" in $projectIacDir"
-    pushd "$projectIacDir" > /dev/null || return 1
+    if [[ ! -z "$projectSharedContructsDir" ]]; then
+        workspaceBuildDir="$projectSharedContructsDir"
+    else
+        workspaceBuildDir="$projectIacDir"
+    fi
+
+    display "\nDetected Yarn workspaces; executing \"yarn build\" in $workspaceBuildDir"
+    display "To disable this build step, set the environment variable COIN_SKIP_WORKSPACE_BUILD to \"y\""
+
+    pushd "$workspaceBuildDir" > /dev/null || return 1
+    local buildTimingMode
+    local buildStart
+    if [[ -n "${EPOCHREALTIME:-}" ]]; then
+        buildTimingMode="epoch"
+        buildStart="$EPOCHREALTIME"
+    else
+        buildTimingMode="seconds"
+        buildStart="$(date +%s)"
+    fi
+
     yarn build
     local buildExit=$?
+
+    if [[ "$buildTimingMode" == "epoch" ]]; then
+        local buildEnd="$EPOCHREALTIME"
+        local buildDuration
+        buildDuration="$(awk -v s="$buildStart" -v e="$buildEnd" 'BEGIN { printf "%.3f", (e - s) }')"
+        display "yarn build took ${buildDuration}s"
+    else
+        local buildEnd
+        buildEnd="$(date +%s)"
+        display "yarn build took $(( buildEnd - buildStart ))s"
+    fi
+
     popd > /dev/null || true
     return $buildExit
 }
@@ -2380,6 +2410,7 @@ exec_cdk_for_env () {
                 $projectCdk deploy${cdkArgs} --require-approval never 2>&1 | tee -a "$COIN_LOG_FILE_PATH" # nosemgrep
             else
                 display "\nExecuting \"$projectCdk diff${cdkArgs} --fail\""
+                display "To skip the automatic diff step for deployments, set the environment variable COIN_CDK_SKIP_DIFF to \"y\""
                 $projectCdk diff${cdkArgs} --fail && cdkDiff="n" || cdkDiff="y" # nosemgrep
 
                 if [[ "$cdkDiff" == "y" ]]; then
