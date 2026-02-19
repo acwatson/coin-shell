@@ -2825,11 +2825,11 @@ choose_local_environment () {
     envChoice=$(select_with_default "$localEnvs" "$localEnvs" "")
 }
 
-# Searches your local environment json files and gives you a choice of which to
-# make your current local environment
-switch_local_environment () {
-    local switchTo
-    choose_local_environment switchTo "Select a local environment to switch to:"
+# Switches your current local environment to another local environment based on
+# the argument passed to this function
+# param1: the name of the environment to switch to
+switch_local_environment_to () {
+    local switchTo="$1"
     set_current_env "$switchTo"
     display "\n${GREEN}Your local environment is now \"$switchTo\"${NC}\n"
 
@@ -2853,6 +2853,35 @@ switch_local_environment () {
     else
         log "\nINFO: no COIN_AFTER_SWITCH_ENV_HOOKS hooks were configured.\n"
     fi
+}
+
+# Searches your local environment json files and gives you a choice of which to
+# make your current local environment
+switch_local_environment () {
+    local switchTo
+    choose_local_environment switchTo "Select a local environment to switch to:"
+    switch_local_environment_to "$switchTo"
+}
+
+# Switches your current local environment to another local environment only if
+# a supplied file does not exist
+# param1: the name of the file to check for existence. File path must be relative to the project home directory
+# param2: the name of the environment to switch to
+switch_local_environment_if_file_does_not_exist () {
+
+    local fileToCheck="$1"
+
+    # prepend $projectDir if $fileToCheck is not an absolute path
+    if [[ "$fileToCheck" != /* ]]; then
+        fileToCheck="$projectDir/$fileToCheck"
+    fi
+
+    if [[ -f "$fileToCheck" ]]; then
+        log "switch_local_environment_if_file_does_not_exist: File \"$fileToCheck\" exists, so not switching local environment."
+        return 0
+    fi
+    local switchTo="$2"
+    switch_local_environment_to "$switchTo"
 }
 
 # Detects which remote environment variable store to query and returns the results

@@ -67,6 +67,25 @@ switch-current-environment: ## Select an environmnt to use
 # Simple switch-current-environment shortcut
 sce: switch-current-environment ## Select an environmnt to use
 
+# Sets the requested environment as the current environment.
+# usage: 
+#  make switch-current-environment-to env=<environmentName>
+switch-current-environment-to: ## Set the current environment (non-interactively)
+	@$(ENV_PATH)utility-functions.sh switch_local_environment_to "$(env)"
+
+# Simple switch-current-environment_to shortcut
+scet: switch-current-environment-to ## Set the current environment (non-interactively)
+
+# If the supplied file does not exist, sets the requested environment as the current environment.
+# File path must be relative to the project home directory
+# usage: 
+#  make switch-current-environment-to f="<fileName>" env=<environmentName>
+switch-current-environment-to-conditionally: ## Conditionally set the current environment (non-interactively)
+	@$(ENV_PATH)utility-functions.sh switch_local_environment_if_file_does_not_exist "$(f)" "$(env)"
+
+# Simple switch-current-environment-to-conditionally shortcut
+scetc: switch-current-environment-to-conditionally ## Conditionally set the current environment (non-interactively)
+
 # Print the current local environment
 get-current-environment: ## Print the name of the current environment
 	@$(ENV_PATH)utility-functions.sh get_current_env

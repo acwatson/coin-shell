@@ -274,7 +274,7 @@ if [[ ! "$ROOT_CONTEXT" =~ ^(create_app_wizard|extract_deliverable_wizard|genera
 
         initLoadCurrentEnv="n"
     fi
-    if [[ "$ROOT_CONTEXT" =~ ^(get_current_env|get_local_environment_names|get_template_files|switch_local_environment)$ ]]; then
+    if [[ "$ROOT_CONTEXT" =~ ^(get_current_env|get_local_environment_names|get_template_files|switch_local_environment|switch_local_environment_to|switch_local_environment_if_file_does_not_exist)$ ]]; then
         log "\nSkipping loading environment files since it is not needed for ROOT_CONTEXT \"$ROOT_CONTEXT\" \n"
         initLoadCurrentEnv="n"
     fi
