@@ -575,15 +575,42 @@ load_env_settings () {
     detect_constant_overrides
 }
 
+# If the .current-environment file does not exist, creates it and sets its value to 
+# either the default environment specified in constants.sh or the first local 
+# environment found. This ensures that there is always a current environment set when 
+# running scripts that source this utility script.
+populate_default_current_env_if_not_set () {
+    if [[ ! -f "$projectCurrentEnvFileName" ]]; then
+        log "No current local environment was configured. Creating a new one..."
+        log "Creating $projectCurrentEnvFileName"
+        touch "$projectCurrentEnvFileName"
+
+        if [[ ! -z "$projectDefaultCurrentEnvironment" ]] && [[ -f "$projectEnvDir/.environment-$projectDefaultCurrentEnvironment.json" ]]; then
+            log "Setting current environment to default value from constants.sh: \"$projectDefaultCurrentEnvironment\""
+            log "Note that you can change your current environment at any time by running this command: \"make sce\""
+            echo "$projectDefaultCurrentEnvironment" > "$projectCurrentEnvFileName"
+        else
+            local localEnvs="$(get_local_environment_names | sed -e 's/ /|/g')"
+            # Select the first value from localEnvs as the default environment and set it into the .current-environment file
+            if [[ ! -z "$localEnvs" ]]; then
+                local firstEnv=$(echo "$localEnvs" | cut -d'|' -f1)
+                log "Setting current environment to first available environment: \"$firstEnv\""
+                log "Note that you can change your current environment at any time by running this command: \"make sce\""
+                echo "$firstEnv" > "$projectCurrentEnvFileName"
+            else
+                displayIssue "No local environments found. Please create an environment first by running \"make ce\"" "error"
+                exit 1
+            fi
+        fi
+    fi
+}
+
 # Gets the current local environment
 get_current_env () {
     if [[ "$CI" == "true" ]] || [[ "$COIN_NO_ENV_FILE" == "true" ]] || [[ "$CREATE_APP" == "true" ]]; then
         echo "$ENV_NAME"
     else
-        if [[ ! -f "$projectCurrentEnvFileName" ]]; then
-            displayIssue "No current local environment is configured. \"$projectCurrentEnvFileName\" does not exist." "error"
-            exit 1
-        fi
+        populate_default_current_env_if_not_set
 
         head -n 1 "$projectCurrentEnvFileName"
     fi
@@ -699,6 +726,8 @@ load_env_var_file_name () {
     if [[ ! -z "$COIN_ENV_VAR_FILE_NAME" ]]; then 
         return
     fi
+
+    populate_default_current_env_if_not_set
 
     curEnvSettingExists=$(does_current_env_setting_exist)
     local setMe="setme"
@@ -2772,8 +2801,12 @@ set_git_env_vars_from_remote_origin () {
 
         if [[ "$gitServiceProvider" == "gitlab" ]]; then
             set_gitlab_env_vars_from_remote_origin
+        elif [[ "$gitServiceProvider" == "github" ]]; then
+            set_github_env_vars_from_remote_origin
         elif [[ "$defaultGitProvider" == "gitlab" ]]; then
             set_gitlab_env_vars_from_remote_origin
+        elif [[ "$defaultGitProvider" == "github" ]]; then
+            set_github_env_vars_from_remote_origin
         else
             displayIssue "Could not detect how to parse git remote to set environment variables" "warn"
         fi
@@ -2825,14 +2858,8 @@ choose_local_environment () {
     envChoice=$(select_with_default "$localEnvs" "$localEnvs" "")
 }
 
-# Switches your current local environment to another local environment based on
-# the argument passed to this function
-# param1: the name of the environment to switch to
-switch_local_environment_to () {
-    local switchTo="$1"
-    set_current_env "$switchTo"
-    display "\n${GREEN}Your local environment is now \"$switchTo\"${NC}\n"
-
+# Executes any hooks that are configured.
+trigger_hooks () {
     if [[ "${#COIN_AFTER_SWITCH_ENV_HOOKS[@]}" != "0" ]]; then
         log "\nReloading utility-functions to use new environment \"$switchTo\"\n"
         # Clear cache for old environment and re-source utility functions so that 
@@ -2853,6 +2880,30 @@ switch_local_environment_to () {
     else
         log "\nINFO: no COIN_AFTER_SWITCH_ENV_HOOKS hooks were configured.\n"
     fi
+}
+
+# Switches your current local environment to another local environment based on
+# the argument passed to this function
+# param1: the name of the environment to switch to
+switch_local_environment_to () {
+    local switchTo="$1"
+
+    if [[ -z "$switchTo" ]]; then
+        displayIssue "No environment name was provided to switch to." "error"
+        exit 1
+    fi
+
+    if [[ -f "$projectEnvDir/.environment-$switchTo.json" ]]; then
+        set_current_env "$switchTo"
+        display "\n${GREEN}Your local environment is now \"$switchTo\"${NC}\n"
+
+        trigger_hooks
+
+    else
+        displayIssue "Local environment \"$switchTo\" does not exist." "error"
+        exit 1
+    fi
+    
 }
 
 # Searches your local environment json files and gives you a choice of which to
@@ -3127,8 +3178,16 @@ get_caller_identity () {
     else
         echo -e -n "\n${CYAN}current session expires: ${NC}"
         cliExpiresNoOffset=${cliExpires%+*}
-        mills=$(TZ=UTC date -j -f "%Y-%m-%dT%H:%M:%S" "$cliExpiresNoOffset" "+%s")
-        date -r "$mills" +'%I:%M %p %Z'
+        # Cross-platform date command handling
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS/BSD date command
+            mills=$(TZ=UTC date -j -f "%Y-%m-%dT%H:%M:%S" "$cliExpiresNoOffset" "+%s")
+            date -r "$mills" +'%I:%M %p %Z'
+        else
+            # Linux/GNU date command
+            mills=$(TZ=UTC date -d "$cliExpiresNoOffset" "+%s")
+            date -d "@$mills" +'%I:%M %p %Z'
+        fi
         echo ""
     fi
 }

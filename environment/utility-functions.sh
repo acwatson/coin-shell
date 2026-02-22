@@ -249,6 +249,10 @@ if [[ -f "$scriptDir/gitlab.sh" ]]; then
     source "$scriptDir/gitlab.sh" 1> /dev/null
 fi
 
+if [[ -f "$scriptDir/github.sh" ]]; then
+    source "$scriptDir/github.sh" 1> /dev/null
+fi
+
 if [[ ! "$ROOT_CONTEXT" =~ ^(create_app_wizard|extract_deliverable_wizard|generate_deployment_instructions_wizard|print_blank_app_env_vars_json)$ ]]; then
 
     if [[ "$DR" =~ ^[Yy]$ ]]; then

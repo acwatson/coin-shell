@@ -272,6 +272,11 @@ asl: aws-sso-login ## AWS CLI SSO log in with the profile for the current enviro
 
 ##@ COIN General Utilities
 
+# Run COIN hooks for the current environment.
+# See constants.sh for more details on what hooks configured
+hooks: ## Run COIN hooks for the current environment.
+	@$(ENV_PATH)utility-functions.sh trigger_hooks
+
 # Execute a utility-function on the current environment
 # If you do not supply the "f" argument, the utility function names will be printed out
 # usage: make util f=<functionName>

@@ -49,6 +49,10 @@ projectEnvPath="/environment"
 # Set directory where core environment scripts are
 projectEnvDir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+# Set a default value for the current environment variable, which can be used in cases 
+# where the .current-environment file is not set up yet.
+projectDefaultCurrentEnvironment=""
+
 # Set application root directory
 projectDir="${projectEnvDir/$projectEnvPath/}" # set app root directory to parent of $projectEnvDir
 

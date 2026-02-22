@@ -60,14 +60,13 @@ custom_git_provider_resolver () {
     local gitOriginValue="$1"
     log "\nexecuting custom_git_provider_resolver on origin \"$gitOriginValue\"\n"
 
-    # Example implementation:
-    # if [[ "$gitOriginValue" == *"example.com"* ]]; then
-    #     echo "gitlab"
-    # else
-    #     echo "unknown"
-    # fi
-
-    echo "unknown"
+    if [[ "$gitOriginValue" == *"github.com"* ]]; then
+        echo "github"
+    elif [[ "$gitOriginValue" == *"gitlab.com"* ]]; then
+        echo "gitlab"
+    else
+        echo "unknown"
+    fi
 }
 
 # Sets curl command for use with GitLab APIs. This can be customized, such as to send cookies.

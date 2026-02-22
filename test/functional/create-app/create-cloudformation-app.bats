@@ -101,6 +101,7 @@ EOF
     assert_exists "$generatedAppEnvDir/extract-deliverable.sh"
     assert_exists "$generatedAppEnvDir/generate-deployment-instructions.sh"
     assert_exists "$generatedAppEnvDir/gitlab.sh"
+    assert_exists "$generatedAppEnvDir/github.sh"
     assert_exists "$generatedAppEnvDir/utility-functions.sh"
 
     # Verify that all non sh files got copied over to the environment directory

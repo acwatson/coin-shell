@@ -622,6 +622,9 @@ create_app () {
     log "      $appEnvDir/gitlab.sh"
     cp "$projectDir/environment/gitlab.sh" "$appEnvDir/gitlab.sh"
 
+    log "      $appEnvDir/github.sh"
+    cp "$projectDir/environment/github.sh" "$appEnvDir/github.sh"
+
     log "      $appEnvDir/create-app-env-questions.sh"
     cp "$projectDir/create-app-env-questions.sh" "$appEnvDir/create-app-env-questions.sh"
 

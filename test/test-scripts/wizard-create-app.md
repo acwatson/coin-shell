@@ -197,6 +197,8 @@ If the Git repository already exists:
 
   * Should create `environment/gitlab.sh` that implements GitLab-related functionality
 
+  * Should create `environment/github.sh` that implements GitLab-related functionality
+
   * Should create `environment/utility-functions.sh` that implements common functionality without depending on Bash 5
 
 * Should create `environment/coin-app-version` file set to the Git hash of the Create COIN App repository that was used to generate the application

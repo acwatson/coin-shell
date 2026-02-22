@@ -5,6 +5,9 @@
 * For CDK projects, check for the use of Yarn workspaces and compile all workspace packages before running CDK commands. This allows CDK code to depend on externalized local packages, such as a "constructs" module.
   * This feature can be disabled by setting a `COIN_SKIP_WORKSPACE_BUILD` environment variable to "y".
 * Added new make commands: `switch-current-environment-to` and `switch-current-environment-to-conditionally`
+* Added the ability to configure a default current environment in `constants.sh` or set from existing environment file
+* Implemented default github and gitlab detection in `extensions.sh`
+* Added ability to directly invoke COIN hooks with `make hooks`
 
 # November 2025
 
