@@ -270,6 +270,13 @@ aws-sso-login: ## AWS CLI SSO log in with the profile for the current environmen
 # Simple aws-sso-login shortcut
 asl: aws-sso-login ## AWS CLI SSO log in with the profile for the current environment
 
+# Get the current AWS CLI profile for the environment
+aws-profile: ## Get the current AWS CLI profile for the environment
+	@$(ENV_PATH)utility-functions.sh get_cli_profile
+
+# Simple aws-profile shortcut
+ap: aws-profile ## Get the current AWS CLI profile for the environment
+
 ##@ COIN General Utilities
 
 # Run COIN hooks for the current environment.

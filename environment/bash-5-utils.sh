@@ -637,6 +637,31 @@ does_current_env_setting_exist () {
     fi
 }
 
+# Gets the AWS CLI profile name for a given environment by looking up the
+# mapping in environment/.cli-profiles.json. If the environment is not found,
+# falls back to the "default" profile if configured. Returns empty string if
+# no profile is found.
+# param1: OPTIONAL. the environment name. Defaults to the current environment name
+get_cli_profile () {
+    local profileJsonFile="$projectEnvDir/.cli-profiles.json"
+    if [[ ! -f "$profileJsonFile" ]]; then
+        return 0
+    fi
+    
+    local currentEnv="$1"
+    if [[ -z "$currentEnv" ]]; then
+        currentEnv=$(get_current_env)
+    fi
+
+    local cliProfile="$(cat "$profileJsonFile" | jq -r --arg currentEnv "$currentEnv" '.[$currentEnv] | select(type == "string")')" # nosemgrep
+
+    if [[ -z "$cliProfile" ]]; then
+        cliProfile="$(cat "$profileJsonFile" | jq -r '.default | select(type == "string")')" # nosemgrep
+    fi
+
+    echo "$cliProfile"
+}
+
 # Looks for "environment name to AWS CLI profile mapping" file at
 # environment/.cli-profiles.json. If this file exits, sets the 
 # "AWS_PROFILE" environment variable to the profile that is set for 
@@ -658,31 +683,20 @@ set_aws_cli_profile () {
         return 0
     fi
 
-    local profileJsonFile="$projectEnvDir/.cli-profiles.json"
-    if [[ -f "$profileJsonFile" ]]; then
-        local currentEnv="$1"
+    local currentEnv="$1"
+    if [[ -z "$currentEnv" ]]; then
+        currentEnv=$(get_current_env)
+    fi
 
-        if [[ -z "$currentEnv" ]]; then
-            currentEnv=$(get_current_env)
-        fi
+    local cliProfile="$(get_cli_profile "$currentEnv")"
 
-        local cliProfile="$(cat "$profileJsonFile" | jq -r --arg currentEnv "$currentEnv" '.[$currentEnv] | select(type == "string")')" # nosemgrep
-
-        if [[ -z "$cliProfile" ]]; then
-            cliProfile="$(cat "$profileJsonFile" | jq -r '.default | select(type == "string")')" # nosemgrep
-        fi
-
-        if [[ -z "$cliProfile" ]]; then
-            log "AWS CLI profile could not be found for the \"$currentEnv\" environment.\n"
-        elif [[ "$AWS_PROFILE" != "$cliProfile" ]]; then
-            display "\nSetting AWS_PROFILE to \"$cliProfile\" based on .cli-profiles.json"
-            export AWS_PROFILE="$cliProfile"
-        else
-            log "AWS_PROFILE was already set to \"$cliProfile\"\n"
-        fi
-        
+    if [[ -z "$cliProfile" ]]; then
+        log "AWS CLI profile could not be found for the \"$currentEnv\" environment.\n"
+    elif [[ "$AWS_PROFILE" != "$cliProfile" ]]; then
+        display "\nSetting AWS_PROFILE to \"$cliProfile\" based on .cli-profiles.json"
+        export AWS_PROFILE="$cliProfile"
     else
-        log "INFO: No $projectEnvDir/.cli-profiles.json file was found.\n"
+        log "AWS_PROFILE was already set to \"$cliProfile\"\n"
     fi
 }
 

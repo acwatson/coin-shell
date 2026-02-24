@@ -8,6 +8,7 @@
 * Added the ability to configure a default current environment in `constants.sh` or set from existing environment file
 * Implemented default github and gitlab detection in `extensions.sh`
 * Added ability to directly invoke COIN hooks with `make hooks`
+* Added ability to get your AWS CLI profile with `make aws-profile` or `make ap` for short
 
 # November 2025
 
