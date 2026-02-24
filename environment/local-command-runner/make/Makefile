@@ -272,7 +272,7 @@ asl: aws-sso-login ## AWS CLI SSO log in with the profile for the current enviro
 
 # Get the current AWS CLI profile for the environment
 aws-profile: ## Get the current AWS CLI profile for the environment
-	@$(ENV_PATH)utility-functions.sh get_cli_profile
+	@$(ENV_PATH)utility-functions.sh get_cli_profile | tr -d '\n\r'
 
 # Simple aws-profile shortcut
 ap: aws-profile ## Get the current AWS CLI profile for the environment
