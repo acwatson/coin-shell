@@ -942,6 +942,10 @@ echo_export_local_app_env_vars () {
     if [[ "{}" != "$ENV_RECONCILED_JSON" ]]; then
         # Attempt to add AWS_PROFILE to exported variables
         local exportJSON="$ENV_RECONCILED_JSON"
+
+        # Set any properties with "blank" value to an empty string for export
+        exportJSON=$(echo "$exportJSON" | jq 'with_entries(.value |= if . == "blank" then "" else . end)')
+
         set_aws_cli_profile
         if [[ ! -z "$AWS_PROFILE" ]]; then
             exportJSON=$(echo "$exportJSON" | jq --arg key "AWS_PROFILE" --arg val "$AWS_PROFILE" '. + {($key): $val}')
@@ -950,6 +954,14 @@ echo_export_local_app_env_vars () {
         if [[ "$OSTYPE" == "darwin"* ]]; then
             echo "export $(echo "$exportJSON" \
             | jq -r 'to_entries | map("\(.key)=\(.value)") | @sh')" | pbcopy
+            display "${CYAN}$ENV_NAME environment variables copied to the clipboard. Just paste them into your shell!${NC}\n"
+        elif [[ "$OSTYPE" == "linux"* ]]; then
+            # Use OSC 52 escape sequence to copy to the host terminal's clipboard.
+            # This works in VS Code integrated terminal and most modern terminals
+            # without requiring X11 or xclip/xsel.
+            local exportStr="export $(echo "$exportJSON" \
+            | jq -r 'to_entries | map("\(.key)=\(.value)") | @sh')"
+            printf "\033]52;c;$(printf '%s' "$exportStr" | base64 | tr -d '\n')\007"
             display "${CYAN}$ENV_NAME environment variables copied to the clipboard. Just paste them into your shell!${NC}\n"
         else
             display "${CYAN}Copy the following and paste into your shell to set all COIN $ENV_NAME env configs:${NC}\n"
@@ -1616,8 +1628,10 @@ generate_make_env () {
 
     local substring="bash"
     local curShell=$(ps -p $$ | tail -n +2)
-    
-    echo "$ENV_RECONCILED_JSON" | jq -r '. | to_entries | map("export " + .key + ":=" + .value)[]' > "$projectEnvDir/make-env"
+
+    local makeEnvJSON=$(echo "$ENV_RECONCILED_JSON" | jq 'with_entries(.value |= if . == "blank" then "" else . end)')
+
+    echo "$makeEnvJSON" | jq -r '. | to_entries | map("export " + .key + ":=" + .value)[]' > "$projectEnvDir/make-env"
 
     set_aws_cli_profile
     if [[ ! -z "$AWS_PROFILE" ]]; then

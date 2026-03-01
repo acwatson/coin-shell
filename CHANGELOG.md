@@ -1,5 +1,10 @@
 # COIN Shell Release Notes
 
+# March 2026
+
+* add copy-to-clipboard support to `make ece` utility for Linux
+* `make ece` and `generate_make_env` hook now replace literal "blank" config values with empty strings
+
 # February 2026
 
 * For CDK projects, check for the use of Yarn workspaces and compile all workspace packages before running CDK commands. This allows CDK code to depend on externalized local packages, such as a "constructs" module.
