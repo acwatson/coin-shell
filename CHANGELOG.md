@@ -1,5 +1,9 @@
 # COIN Shell Release Notes
 
+# April 2026
+
+* Fix parsing of `environment/.current-environment` and `environment/app-env-var-names.txt` so that it works even if the files contain Windows line endings
+
 # March 2026
 
 * add copy-to-clipboard support to `make ece` utility for Linux

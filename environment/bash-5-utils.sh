@@ -612,7 +612,7 @@ get_current_env () {
     else
         populate_default_current_env_if_not_set
 
-        head -n 1 "$projectCurrentEnvFileName"
+        head -n 1 "$projectCurrentEnvFileName" | tr -d '\r'
     fi
 }
 
@@ -791,7 +791,7 @@ load_env_var_names () {
     fi
 
     local requiredEnvVars
-    IFS=$'\n' read -d '' -r -a requiredEnvVars < "$projectEnvDir/app-env-var-names.txt"
+    IFS=$'\n' read -d '' -r -a requiredEnvVars < <(tr -d '\r' < "$projectEnvDir/app-env-var-names.txt")
     local varIndex
     
     # Create list of environment variable names
@@ -903,12 +903,24 @@ get_env_var_value () {
     fi
 
     if [[ "$envVarValue" == "sensitive" ]] && [[ ! "$ROOT_CONTEXT" =~ ^(create_env_wizard|delete_env_wizard|pull_env_vars|get_current_env|get_local_environment_names|switch_local_environment)$ ]]; then
+        local TEMPLATE_FILE="$(dirname "$COIN_ENV_VAR_FILE_NAME")/sensitive-env-template.json"
         if [[ "$IS_COIN_SENSITIVE_ENV_FILE_FOUND" == "n" ]]; then
-            displayIssue "\"$envVarName\" environment variable is set to \"sensitive\" but no $COIN_SENSITIVE_ENV_VAR_FILE_NAME file was found." "error"
-            displayIssue "${RED}To fix this, create a \"${COIN_SENSITIVE_ENV_VAR_FILE_NAME}\" file and set a value for \"$envVarName\"${NC}\n"
+            displayIssue "\"$envVarName\" is marked \"sensitive\" but \"$COIN_SENSITIVE_ENV_VAR_FILE_NAME\" does not exist." "error"
+            if [[ -f "$TEMPLATE_FILE" ]]; then
+                displayIssue "${RED}Create it using the template:${NC}"
+                displayIssue "${RED}  cp \"$TEMPLATE_FILE\" \"$COIN_SENSITIVE_ENV_VAR_FILE_NAME\"${NC}"
+                displayIssue "${RED}Template contents:${NC}"
+                displayIssue "${RED}$(cat "$TEMPLATE_FILE")${NC}\n"
+            else
+                displayIssue "${RED}To fix this, create a \"${COIN_SENSITIVE_ENV_VAR_FILE_NAME}\" file and set a value for \"$envVarName\"${NC}\n"
+            fi
         else
-            displayIssue "\"$envVarName\" environment variable is set to \"sensitive\" but no value was set in ${COIN_SENSITIVE_ENV_VAR_FILE_NAME}." "error"
-            displayIssue "${RED}To fix this, set a value for \"$envVarName\" in \"${COIN_SENSITIVE_ENV_VAR_FILE_NAME}\"${NC}\n"
+            displayIssue "\"$envVarName\" is marked \"sensitive\" but has no value in \"$COIN_SENSITIVE_ENV_VAR_FILE_NAME\"." "error"
+            displayIssue "${RED}Add it to that file. See the template for reference:${NC}"
+            if [[ -f "$TEMPLATE_FILE" ]]; then
+                displayIssue "${RED}  $TEMPLATE_FILE${NC}"
+                displayIssue "${RED}$(cat "$TEMPLATE_FILE")${NC}\n"
+            fi
         fi
         exit 1
     fi
